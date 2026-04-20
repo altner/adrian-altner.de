@@ -1,0 +1,18 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import CategoryDetailPage from '~/components/CategoryDetailPage.astro';
+import { entrySlug, getCategoriesByLocale } from '~/i18n/posts';
+
+export async function getStaticPaths() {
+	const categories = await getCategoriesByLocale('en');
+	return categories.map((category) => ({
+		params: { slug: entrySlug(category) },
+		props: { category },
+	}));
+}
+
+type Props = { category: CollectionEntry<'categories'> };
+const { category } = Astro.props;
+---
+
+<CategoryDetailPage locale="en" category={category} />

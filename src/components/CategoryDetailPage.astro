@@ -1,0 +1,88 @@
+---
+import { Image } from 'astro:assets';
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from '~/components/FormattedDate.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { type Locale, SITE } from '~/consts';
+import { getPostsByCategory, postSlug } from '~/i18n/posts';
+import { localizePath, t } from '~/i18n/ui';
+
+interface Props {
+	locale: Locale;
+	category: CollectionEntry<'categories'>;
+}
+
+const { locale, category } = Astro.props;
+const posts = await getPostsByCategory(category);
+const pageTitle = `${category.data.name} — ${SITE[locale].title}`;
+const pageDescription =
+	category.data.description ?? `${t(locale, 'category.postsIn')} ${category.data.name}`;
+---
+
+<BaseLayout
+	title={pageTitle}
+	description={pageDescription}
+	locale={locale}
+	entry={category}
+	bodyClass="category-detail"
+>
+	<article class="prose">
+		<h1>{category.data.name}</h1>
+		{category.data.description && <p class="lead">{category.data.description}</p>}
+		<h2>{t(locale, 'category.postsIn')} {category.data.name}</h2>
+		{
+			posts.length === 0 ? (
+				<p>{t(locale, 'category.noPosts')}</p>
+			) : (
+				<ul>
+					{posts.map((post) => (
+						<li>
+							<a href={localizePath(`/${postSlug(post)}/`, locale)}>
+								{post.data.heroImage && (
+									<Image
+										width={320}
+										height={160}
+										src={post.data.heroImage}
+										alt=""
+										transition:name={`hero-${post.id}`}
+									/>
+								)}
+								<h3>{post.data.title}</h3>
+								<p class="date">
+									<FormattedDate date={post.data.pubDate} locale={locale} />
+								</p>
+							</a>
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</article>
+</BaseLayout>
+
+<style>
+	body.category-detail main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.category-detail ul {
+		list-style: none;
+		padding: 0;
+	}
+	body.category-detail li {
+		margin-bottom: 1.5em;
+	}
+	body.category-detail li a {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+	body.category-detail li img {
+		border-radius: 8px;
+	}
+	body.category-detail .date {
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+</style>

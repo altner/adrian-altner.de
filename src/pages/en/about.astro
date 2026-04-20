@@ -1,0 +1,14 @@
+---
+import AboutHeroImage from '~/assets/blog-placeholder-about.jpg';
+import Layout from '~/layouts/Post.astro';
+---
+
+<Layout
+	title="About Me"
+	description="Short introduction."
+	pubDate={new Date('August 08 2021')}
+	heroImage={AboutHeroImage}
+	locale="en"
+>
+	<p>This is the English version of the about page.</p>
+</Layout>

@@ -1,0 +1,62 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { type Locale, SITE } from '~/consts';
+import { categoryHref, getCategoriesByLocale, getPostsByCategory } from '~/i18n/posts';
+import { t } from '~/i18n/ui';
+
+interface Props {
+	locale: Locale;
+}
+
+const { locale } = Astro.props;
+const categories = await getCategoriesByLocale(locale);
+const withCounts = await Promise.all(
+	categories.map(async (c) => ({ category: c, count: (await getPostsByCategory(c)).length })),
+);
+
+const pageTitle = `${t(locale, 'categories.title')} — ${SITE[locale].title}`;
+const pageDescription = t(locale, 'categories.description');
+---
+
+<BaseLayout
+	title={pageTitle}
+	description={pageDescription}
+	locale={locale}
+	bodyClass="category-index"
+>
+	<article class="prose">
+		<h1>{t(locale, 'categories.title')}</h1>
+		<p>{pageDescription}</p>
+		<ul>
+			{
+				withCounts.map(({ category, count }) => (
+					<li>
+						<a href={categoryHref(category)}>
+							<strong>{category.data.name}</strong>
+						</a>
+						<span class="count"> ({count})</span>
+						{category.data.description && <p>{category.data.description}</p>}
+					</li>
+				))
+			}
+		</ul>
+	</article>
+</BaseLayout>
+
+<style>
+	body.category-index main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.category-index ul {
+		list-style: none;
+		padding: 0;
+	}
+	body.category-index li {
+		margin-bottom: 1.25em;
+	}
+	body.category-index .count {
+		color: rgb(var(--gray));
+	}
+</style>

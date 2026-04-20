@@ -1,0 +1,181 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import { DEFAULT_LOCALE, type Locale, SITE } from '~/consts';
+import {
+	aboutSegment,
+	categoryIndexSegment,
+	entryHref,
+	findTagBySlug,
+	findTranslation,
+	tagHref,
+	tagIndexSegment,
+	tagSegment,
+} from '~/i18n/posts';
+import { getLocaleFromUrl, localizePath, switchLocalePath, t } from '~/i18n/ui';
+import HeaderLink from '~/components/HeaderLink.astro';
+
+interface Props {
+	locale?: Locale;
+	/** The current page's content entry, if any — used to resolve a translated language-switch link. */
+	entry?: CollectionEntry<'posts' | 'categories'>;
+}
+
+const { entry } = Astro.props;
+const locale: Locale = Astro.props.locale ?? getLocaleFromUrl(Astro.url);
+const otherLocale: Locale = locale === 'de' ? 'en' : 'de';
+const homeHref = localizePath('/', locale);
+const aboutHref = localizePath(`/${aboutSegment(locale)}`, locale);
+const categoriesHref = localizePath(`/${categoryIndexSegment(locale)}`, locale);
+const tagsHref = localizePath(`/${tagIndexSegment(locale)}`, locale);
+
+const translated = entry ? await findTranslation(entry, otherLocale) : undefined;
+
+// If we're on a tag detail page, verify the tag exists in the target locale —
+// otherwise the switched URL would 404. Fall back to the target tags index.
+async function resolveSwitchHref(): Promise<string> {
+	if (translated) return entryHref(translated);
+	if (entry) return localizePath('/', otherLocale);
+	const parts = Astro.url.pathname.split('/').filter(Boolean);
+	const localePrefix = parts[0] === locale ? 1 : 0;
+	const first = parts[localePrefix];
+	const slug = parts[localePrefix + 1];
+	if (first === tagSegment(locale) && slug) {
+		const target = await findTagBySlug(otherLocale, slug);
+		return target
+			? tagHref(otherLocale, target)
+			: localizePath(`/${tagIndexSegment(otherLocale)}`, otherLocale);
+	}
+	return switchLocalePath(Astro.url.pathname, otherLocale);
+}
+const switchHref = await resolveSwitchHref();
+---
+
+<header>
+	<nav>
+		<h2><a href={homeHref}>{SITE[locale].title}</a></h2>
+		<div class="internal-links">
+			<HeaderLink href={homeHref}>{t(locale, 'nav.home')}</HeaderLink>
+			<HeaderLink href={aboutHref}>{t(locale, 'nav.about')}</HeaderLink>
+			<HeaderLink href={categoriesHref}>{t(locale, 'nav.categories')}</HeaderLink>
+			<HeaderLink href={tagsHref}>{t(locale, 'nav.tags')}</HeaderLink>
+		</div>
+		<a
+			class={`lang-toggle lang-toggle--${locale}`}
+			href={switchHref}
+			hreflang={otherLocale}
+			lang={otherLocale}
+			aria-label={t(locale, `lang.${otherLocale}`)}
+		>
+			<span class="lang-toggle__thumb" aria-hidden="true"></span>
+			<span class={`lang-toggle__label${locale === 'de' ? ' is-active' : ''}`}>DE</span>
+			<span class={`lang-toggle__label${locale === 'en' ? ' is-active' : ''}`}>EN</span>
+		</a>
+	</nav>
+</header>
+
+<script>
+	function wireLangToggle() {
+		const toggle = document.querySelector<HTMLAnchorElement>('.lang-toggle');
+		toggle?.addEventListener('click', () => toggle.classList.add('is-switching'), { once: true });
+	}
+	wireLangToggle();
+	document.addEventListener('astro:page-load', wireLangToggle);
+</script>
+<style>
+	header {
+		margin: 0;
+		padding: 0 1em;
+		background: white;
+		box-shadow: 0 2px 8px rgba(var(--black), 5%);
+	}
+	h2 {
+		margin: 0;
+		font-size: 1em;
+	}
+
+	h2 a,
+	h2 a.active {
+		text-decoration: none;
+	}
+	nav {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 1em;
+	}
+	nav a {
+		padding: 1em 0.5em;
+		color: var(--black);
+		border-bottom: 4px solid transparent;
+		text-decoration: none;
+	}
+	nav a.active {
+		text-decoration: none;
+		border-bottom-color: var(--accent);
+	}
+	nav a.lang-toggle {
+		position: relative;
+		display: inline-flex;
+		align-items: stretch;
+		padding: 3px;
+		margin: 0;
+		background: rgba(var(--gray-light), 0.7);
+		border: 0;
+		border-radius: 999px;
+		font-size: 0.75em;
+		font-weight: 700;
+		line-height: 1;
+		font-variant-numeric: tabular-nums;
+		font-feature-settings: 'tnum';
+		user-select: none;
+	}
+	nav a.lang-toggle:hover {
+		background: rgba(var(--gray-light), 1);
+	}
+	.lang-toggle__thumb {
+		position: absolute;
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		width: calc(50% - 3px);
+		border-radius: 999px;
+		background: var(--accent);
+		box-shadow: 0 1px 3px rgba(var(--black), 0.18);
+		transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	.lang-toggle--en .lang-toggle__thumb {
+		transform: translateX(100%);
+	}
+	.lang-toggle--de.is-switching .lang-toggle__thumb {
+		transform: translateX(100%);
+	}
+	.lang-toggle--en.is-switching .lang-toggle__thumb {
+		transform: translateX(0);
+	}
+	.lang-toggle__label {
+		position: relative;
+		z-index: 1;
+		display: block;
+		flex: 1;
+		width: 2.2em;
+		padding: 0.6em 0 0.5em;
+		text-align: center;
+		color: rgb(var(--gray));
+		transition: color 280ms ease;
+	}
+	.lang-toggle__label.is-active {
+		color: white;
+	}
+	.lang-toggle.is-switching .lang-toggle__label.is-active {
+		color: rgb(var(--gray));
+	}
+	.lang-toggle.is-switching .lang-toggle__label:not(.is-active) {
+		color: white;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.lang-toggle__thumb,
+		.lang-toggle__label {
+			transition: none;
+		}
+	}
+</style>

@@ -1,0 +1,84 @@
+---
+import { Image } from 'astro:assets';
+import FormattedDate from '~/components/FormattedDate.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { type Locale, SITE } from '~/consts';
+import { type TagEntry, getPostsByTag, postSlug } from '~/i18n/posts';
+import { localizePath, t } from '~/i18n/ui';
+
+interface Props {
+	locale: Locale;
+	tag: TagEntry;
+}
+
+const { locale, tag } = Astro.props;
+const posts = await getPostsByTag(locale, tag.slug);
+const pageTitle = `${tag.name} — ${SITE[locale].title}`;
+const pageDescription = `${t(locale, 'tag.postsTagged')} ${tag.name}`;
+---
+
+<BaseLayout
+	title={pageTitle}
+	description={pageDescription}
+	locale={locale}
+	bodyClass="tag-detail"
+>
+	<article class="prose">
+		<h1>{tag.name}</h1>
+		<h2>{t(locale, 'tag.postsTagged')} {tag.name}</h2>
+		{
+			posts.length === 0 ? (
+				<p>{t(locale, 'tag.noPosts')}</p>
+			) : (
+				<ul>
+					{posts.map((post) => (
+						<li>
+							<a href={localizePath(`/${postSlug(post)}/`, locale)}>
+								{post.data.heroImage && (
+									<Image
+										width={320}
+										height={160}
+										src={post.data.heroImage}
+										alt=""
+										transition:name={`hero-${post.id}`}
+									/>
+								)}
+								<h3>{post.data.title}</h3>
+								<p class="date">
+									<FormattedDate date={post.data.pubDate} locale={locale} />
+								</p>
+							</a>
+						</li>
+					))}
+				</ul>
+			)
+		}
+	</article>
+</BaseLayout>
+
+<style>
+	body.tag-detail main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.tag-detail ul {
+		list-style: none;
+		padding: 0;
+	}
+	body.tag-detail li {
+		margin-bottom: 1.5em;
+	}
+	body.tag-detail li a {
+		display: block;
+		text-decoration: none;
+		color: inherit;
+	}
+	body.tag-detail li img {
+		border-radius: 8px;
+	}
+	body.tag-detail .date {
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+</style>

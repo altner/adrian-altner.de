@@ -1,0 +1,57 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { type Locale, SITE } from '~/consts';
+import { getTagsByLocale, tagHref } from '~/i18n/posts';
+import { t } from '~/i18n/ui';
+
+interface Props {
+	locale: Locale;
+}
+
+const { locale } = Astro.props;
+const tags = await getTagsByLocale(locale);
+const pageTitle = `${t(locale, 'tags.title')} — ${SITE[locale].title}`;
+const pageDescription = t(locale, 'tags.description');
+---
+
+<BaseLayout
+	title={pageTitle}
+	description={pageDescription}
+	locale={locale}
+	bodyClass="tag-index"
+>
+	<article class="prose">
+		<h1>{t(locale, 'tags.title')}</h1>
+		<p>{pageDescription}</p>
+		<ul class="tag-cloud">
+			{
+				tags.map((tag) => (
+					<li>
+						<a href={tagHref(locale, tag)}>
+							<strong>{tag.name}</strong>
+						</a>
+						<span class="count"> ({tag.count})</span>
+					</li>
+				))
+			}
+		</ul>
+	</article>
+</BaseLayout>
+
+<style>
+	body.tag-index main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.tag-index .tag-cloud {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5em 1em;
+		list-style: none;
+		padding: 0;
+	}
+	body.tag-index .count {
+		color: rgb(var(--gray));
+	}
+</style>

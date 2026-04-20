@@ -1,0 +1,13 @@
+---
+import TagDetailPage from '~/components/TagDetailPage.astro';
+import { getTagsByLocale } from '~/i18n/posts';
+
+export async function getStaticPaths() {
+	const tags = await getTagsByLocale('en');
+	return tags.map((tag) => ({ params: { slug: tag.slug }, props: { tag } }));
+}
+
+const { tag } = Astro.props;
+---
+
+<TagDetailPage locale="en" tag={tag} />

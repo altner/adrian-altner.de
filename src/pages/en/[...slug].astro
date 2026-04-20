@@ -1,0 +1,21 @@
+---
+import { type CollectionEntry, render } from 'astro:content';
+import Post from '~/layouts/Post.astro';
+import { getPostsByLocale, postSlug } from '~/i18n/posts';
+
+export async function getStaticPaths() {
+	const posts = await getPostsByLocale('en');
+	return posts.map((post) => ({
+		params: { slug: postSlug(post) },
+		props: post,
+	}));
+}
+type Props = CollectionEntry<'posts'>;
+
+const post = Astro.props;
+const { Content } = await render(post);
+---
+
+<Post {...post.data} locale="en" entry={post}>
+	<Content />
+</Post>

@@ -1,0 +1,46 @@
+---
+import type { ImageMetadata } from 'astro';
+import type { CollectionEntry } from 'astro:content';
+import { ClientRouter } from 'astro:transitions';
+import BaseHead from '~/components/BaseHead.astro';
+import Footer from '~/components/Footer.astro';
+import Header from '~/components/Header.astro';
+import { DEFAULT_LOCALE, type Locale } from '~/consts';
+import { getLocaleFromUrl } from '~/i18n/ui';
+
+interface Props {
+	title: string;
+	description: string;
+	locale?: Locale;
+	image?: ImageMetadata;
+	/** Current content entry, used for the language switcher's translation lookup. */
+	entry?: CollectionEntry<'posts' | 'categories'>;
+	/** Optional extra class on `<body>` for per-page styling hooks. */
+	bodyClass?: string;
+}
+
+const {
+	title,
+	description,
+	image,
+	entry,
+	bodyClass,
+	locale = getLocaleFromUrl(Astro.url) ?? DEFAULT_LOCALE,
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang={locale}>
+	<head>
+		<BaseHead title={title} description={description} image={image} locale={locale} />
+		<ClientRouter />
+		<slot name="head" />
+	</head>
+	<body class={bodyClass}>
+		<Header locale={locale} entry={entry} transition:persist />
+		<main transition:animate="fade">
+			<slot />
+		</main>
+		<Footer transition:persist />
+	</body>
+</html>

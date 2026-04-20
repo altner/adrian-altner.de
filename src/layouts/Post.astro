@@ -1,0 +1,149 @@
+---
+import { Image } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from '~/components/FormattedDate.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { DEFAULT_LOCALE, type Locale } from '~/consts';
+import { categoryHref, entryHref, findTranslation, tagHref } from '~/i18n/posts';
+import { getLocaleFromUrl, t } from '~/i18n/ui';
+
+type Props = CollectionEntry<'posts'>['data'] & {
+	locale?: Locale;
+	entry?: CollectionEntry<'posts'>;
+};
+
+const {
+	title,
+	description,
+	pubDate,
+	updatedDate,
+	heroImage,
+	category,
+	tags,
+	entry,
+	locale = getLocaleFromUrl(Astro.url) ?? DEFAULT_LOCALE,
+} = Astro.props;
+
+const categoryEntry = category ? await getEntry(category) : undefined;
+const otherLocale: Locale = locale === 'de' ? 'en' : 'de';
+const translation = entry ? await findTranslation(entry, otherLocale) : undefined;
+---
+
+<BaseLayout title={title} description={description} image={heroImage} locale={locale} entry={entry}>
+	<article>
+		<div class="hero-image">
+			{
+				heroImage && (
+					<Image
+						width={1020}
+						height={510}
+						src={heroImage}
+						alt=""
+						transition:name={entry ? `hero-${entry.id}` : undefined}
+					/>
+				)
+			}
+		</div>
+		<div class="prose">
+			<div class="title">
+				<div class="date">
+					<FormattedDate date={pubDate} locale={locale} />
+					{
+						updatedDate && (
+							<div class="last-updated-on">
+								{t(locale, 'post.lastUpdated')} <FormattedDate date={updatedDate} locale={locale} />
+							</div>
+						)
+					}
+				</div>
+				<h1>{title}</h1>
+				{
+					categoryEntry && (
+						<p class="category">
+							{t(locale, 'post.category')}:{' '}
+							<a href={categoryHref(categoryEntry)}>{categoryEntry.data.name}</a>
+						</p>
+					)
+				}
+				{
+					tags && tags.length > 0 && (
+						<p class="tags">
+							{t(locale, 'post.tags')}:{' '}
+							{tags.map((name, i) => (
+								<>
+									{i > 0 && ', '}
+									<a href={tagHref(locale, name)}>{name}</a>
+								</>
+							))}
+						</p>
+					)
+				}
+				<hr />
+			</div>
+			{
+				translation && (
+					<aside class="translation-notice" lang={otherLocale}>
+						<span>{t(locale, 'post.translationAvailable')}</span>{' '}
+						<a href={entryHref(translation)} hreflang={otherLocale}>
+							{t(locale, 'post.translationLink')}
+						</a>
+					</aside>
+				)
+			}
+			<slot />
+		</div>
+	</article>
+</BaseLayout>
+
+<style>
+	main {
+		width: calc(100% - 2em);
+		max-width: 100%;
+		margin: 0;
+	}
+	.hero-image {
+		width: 100%;
+	}
+	.hero-image img {
+		display: block;
+		margin: 0 auto;
+		border-radius: 12px;
+		box-shadow: var(--box-shadow);
+	}
+	.prose {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: auto;
+		padding: 1em;
+		color: rgb(var(--gray-dark));
+	}
+	.title {
+		margin-bottom: 1em;
+		padding: 1em 0;
+		text-align: center;
+		line-height: 1;
+	}
+	.title h1 {
+		margin: 0 0 0.5em 0;
+	}
+	.date {
+		margin-bottom: 0.5em;
+		color: rgb(var(--gray));
+	}
+	.last-updated-on {
+		font-style: italic;
+	}
+	.translation-notice {
+		margin: 0 0 2em 0;
+		padding: 0.75em 1em;
+		background: rgba(var(--gray-light), 0.6);
+		border-left: 3px solid var(--accent);
+		border-radius: 4px;
+		font-size: 0.95em;
+	}
+	.translation-notice a {
+		color: var(--accent);
+		font-weight: 600;
+	}
+</style>
