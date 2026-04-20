@@ -59,6 +59,21 @@ const switchHref = await resolveSwitchHref();
 			<HeaderLink href={categoriesHref}>{t(locale, 'nav.categories')}</HeaderLink>
 			<HeaderLink href={tagsHref}>{t(locale, 'nav.tags')}</HeaderLink>
 		</div>
+		<div class="toolbar">
+		<button class="theme-toggle" type="button" aria-label="Toggle theme">
+			<span class="theme-toggle__thumb" aria-hidden="true"></span>
+			<span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">
+				<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<circle cx="12" cy="12" r="4"></circle>
+					<path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"></path>
+				</svg>
+			</span>
+			<span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">
+				<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+					<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+				</svg>
+			</span>
+		</button>
 		<a
 			class={`lang-toggle lang-toggle--${locale}`}
 			href={switchHref}
@@ -70,22 +85,47 @@ const switchHref = await resolveSwitchHref();
 			<span class={`lang-toggle__label${locale === 'de' ? ' is-active' : ''}`}>DE</span>
 			<span class={`lang-toggle__label${locale === 'en' ? ' is-active' : ''}`}>EN</span>
 		</a>
+		</div>
 	</nav>
 </header>
 
 <script>
+	import { navigate } from 'astro:transitions/client';
 	function wireLangToggle() {
 		const toggle = document.querySelector<HTMLAnchorElement>('.lang-toggle');
-		toggle?.addEventListener('click', () => toggle.classList.add('is-switching'), { once: true });
+		if (!toggle || toggle.dataset.wired) return;
+		toggle.dataset.wired = '1';
+		toggle.addEventListener('click', (e) => {
+			if (e.metaKey || e.ctrlKey || e.shiftKey || (e as MouseEvent).button === 1) return;
+			const href = toggle.getAttribute('href');
+			if (!href) return;
+			e.preventDefault();
+			toggle.classList.add('is-switching');
+			window.setTimeout(() => navigate(href), 280);
+		});
+	}
+	function wireThemeToggle() {
+		const btn = document.querySelector<HTMLButtonElement>('.theme-toggle');
+		if (!btn || btn.dataset.wired) return;
+		btn.dataset.wired = '1';
+		btn.addEventListener('click', () => {
+			const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+			document.documentElement.dataset.theme = next;
+			localStorage.setItem('theme', next);
+		});
 	}
 	wireLangToggle();
-	document.addEventListener('astro:page-load', wireLangToggle);
+	wireThemeToggle();
+	document.addEventListener('astro:page-load', () => {
+		wireLangToggle();
+		wireThemeToggle();
+	});
 </script>
 <style>
 	header {
 		margin: 0;
 		padding: 0 1em;
-		background: white;
+		background: rgb(var(--surface));
 		box-shadow: 0 2px 8px rgba(var(--black), 5%);
 	}
 	h2 {
@@ -175,6 +215,68 @@ const switchHref = await resolveSwitchHref();
 	@media (prefers-reduced-motion: reduce) {
 		.lang-toggle__thumb,
 		.lang-toggle__label {
+			transition: none;
+		}
+	}
+	.toolbar {
+		display: flex;
+		align-items: center;
+		gap: 0.6em;
+	}
+	.theme-toggle {
+		position: relative;
+		display: inline-flex;
+		align-items: stretch;
+		padding: 3px;
+		margin: 0;
+		border: 0;
+		background: rgba(var(--gray-light), 0.7);
+		border-radius: 999px;
+		cursor: pointer;
+		line-height: 1;
+		user-select: none;
+		font: inherit;
+	}
+	.theme-toggle:hover {
+		background: rgba(var(--gray-light), 1);
+	}
+	.theme-toggle__thumb {
+		position: absolute;
+		top: 3px;
+		bottom: 3px;
+		left: 3px;
+		width: calc(50% - 3px);
+		border-radius: 999px;
+		background: var(--accent);
+		box-shadow: 0 1px 3px rgba(var(--black), 0.18);
+	}
+	:global(:root[data-theme-ready]) .theme-toggle__thumb {
+		transition: transform 280ms cubic-bezier(0.4, 0, 0.2, 1);
+	}
+	:global(:root[data-theme='dark']) .theme-toggle__thumb {
+		transform: translateX(100%);
+	}
+	.theme-toggle__icon {
+		position: relative;
+		z-index: 1;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 1.8em;
+		height: 1.8em;
+		font-size: 0.9em;
+		color: rgb(var(--gray));
+	}
+	:global(:root[data-theme-ready]) .theme-toggle__icon {
+		transition: color 280ms ease;
+	}
+	:global(:root:not([data-theme='dark'])) .theme-toggle__icon--sun,
+	:global(:root[data-theme='dark']) .theme-toggle__icon--moon {
+		color: white;
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.theme-toggle__thumb,
+		.theme-toggle__icon {
 			transition: none;
 		}
 	}

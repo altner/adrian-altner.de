@@ -33,11 +33,36 @@ const {
 <html lang={locale}>
 	<head>
 		<BaseHead title={title} description={description} image={image} locale={locale} />
+		<script is:inline>
+			(() => {
+				const root = document.documentElement;
+				const apply = () => {
+					const stored = localStorage.getItem('theme');
+					const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+					const theme = stored === 'dark' || stored === 'light' ? stored : prefersDark ? 'dark' : 'light';
+					root.dataset.theme = theme;
+				};
+				apply();
+				const enableTransitions = () => {
+					requestAnimationFrame(() =>
+						requestAnimationFrame(() => root.setAttribute('data-theme-ready', '')),
+					);
+				};
+				enableTransitions();
+				document.addEventListener('astro:before-swap', () => {
+					root.removeAttribute('data-theme-ready');
+				});
+				document.addEventListener('astro:after-swap', () => {
+					apply();
+					enableTransitions();
+				});
+			})();
+		</script>
 		<ClientRouter />
 		<slot name="head" />
 	</head>
 	<body class={bodyClass}>
-		<Header locale={locale} entry={entry} transition:persist />
+		<Header locale={locale} entry={entry} />
 		<main transition:animate="fade">
 			<slot />
 		</main>
