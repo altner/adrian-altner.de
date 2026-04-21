@@ -53,7 +53,7 @@ const switchHref = await resolveSwitchHref();
 <header>
 	<nav>
 		<h2><a href={homeHref}>{SITE[locale].title}</a></h2>
-		<div class="internal-links">
+		<div class="internal-links" id="mobile-menu">
 			<HeaderLink href={homeHref}>{t(locale, 'nav.home')}</HeaderLink>
 			<HeaderLink href={aboutHref}>{t(locale, 'nav.about')}</HeaderLink>
 			<HeaderLink href={categoriesHref}>{t(locale, 'nav.categories')}</HeaderLink>
@@ -85,6 +85,11 @@ const switchHref = await resolveSwitchHref();
 			<span class={`lang-toggle__label${locale === 'de' ? ' is-active' : ''}`}>DE</span>
 			<span class={`lang-toggle__label${locale === 'en' ? ' is-active' : ''}`}>EN</span>
 		</a>
+		<button class="menu-toggle" type="button" aria-label="Menu" aria-controls="mobile-menu" aria-expanded="false">
+			<span class="menu-toggle__bar"></span>
+			<span class="menu-toggle__bar"></span>
+			<span class="menu-toggle__bar"></span>
+		</button>
 		</div>
 	</nav>
 </header>
@@ -114,15 +119,61 @@ const switchHref = await resolveSwitchHref();
 			localStorage.setItem('theme', next);
 		});
 	}
+	function wireMenuToggle() {
+		const btn = document.querySelector<HTMLButtonElement>('.menu-toggle');
+		const menu = document.getElementById('mobile-menu');
+		const header = document.querySelector<HTMLElement>('header');
+		if (!btn || !menu || !header || btn.dataset.wired) return;
+		btn.dataset.wired = '1';
+		const nav = header.querySelector('nav');
+		const mq = window.matchMedia('(max-width: 960px)');
+		const syncLocation = () => {
+			if (mq.matches) {
+				if (menu.parentElement !== document.body) document.body.appendChild(menu);
+			} else {
+				if (menu.parentElement !== nav) nav!.insertBefore(menu, nav!.children[1] ?? null);
+			}
+		};
+		syncLocation();
+		mq.addEventListener('change', syncLocation);
+		const setScrollbarCompensation = (on: boolean) => {
+			if (on) {
+				const sbw = window.innerWidth - document.documentElement.clientWidth;
+				document.documentElement.style.setProperty('--scrollbar-width', `${sbw}px`);
+			} else {
+				document.documentElement.style.removeProperty('--scrollbar-width');
+			}
+		};
+		const close = () => {
+			header.classList.remove('is-menu-open');
+			menu.classList.remove('is-open');
+			btn.setAttribute('aria-expanded', 'false');
+			setScrollbarCompensation(false);
+		};
+		btn.addEventListener('click', () => {
+			const willOpen = !header.classList.contains('is-menu-open');
+			if (willOpen) setScrollbarCompensation(true);
+			const open = header.classList.toggle('is-menu-open');
+			menu.classList.toggle('is-open', open);
+			btn.setAttribute('aria-expanded', String(open));
+			if (!open) setScrollbarCompensation(false);
+		});
+		menu.querySelectorAll('a').forEach((a) => a.addEventListener('click', close));
+		document.addEventListener('astro:after-swap', close);
+	}
 	wireLangToggle();
 	wireThemeToggle();
+	wireMenuToggle();
 	document.addEventListener('astro:page-load', () => {
 		wireLangToggle();
 		wireThemeToggle();
+		wireMenuToggle();
 	});
 </script>
 <style>
 	header {
+		position: relative;
+		z-index: 50;
 		margin: 0;
 		padding: 0 1em;
 		background: rgb(var(--surface));
@@ -151,12 +202,16 @@ const switchHref = await resolveSwitchHref();
 	}
 	nav > h2 {
 		justify-self: start;
+		position: relative;
+		z-index: 50;
 	}
 	nav > .internal-links {
 		justify-self: center;
 	}
 	nav > .toolbar {
 		justify-self: end;
+		position: relative;
+		z-index: 50;
 	}
 	nav a {
 		padding: 1em 0.5em;
@@ -293,6 +348,86 @@ const switchHref = await resolveSwitchHref();
 		.theme-toggle__thumb,
 		.theme-toggle__icon {
 			transition: none;
+		}
+	}
+	.menu-toggle {
+		display: none;
+		margin-left: 0.8em;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		gap: 4px;
+		width: 2.1em;
+		height: 2.1em;
+		padding: 0;
+		border: 0;
+		background: rgba(var(--gray-light), 0.7);
+		border-radius: 999px;
+		cursor: pointer;
+	}
+	.menu-toggle:hover {
+		background: rgba(var(--gray-light), 1);
+	}
+	.menu-toggle__bar {
+		display: block;
+		width: 1em;
+		height: 2px;
+		background: rgb(var(--gray-dark));
+		border-radius: 1px;
+		transition:
+			transform 260ms cubic-bezier(0.4, 0, 0.2, 1),
+			opacity 180ms ease;
+	}
+	header.is-menu-open .menu-toggle__bar:nth-child(1) {
+		transform: translateY(6px) rotate(45deg);
+	}
+	header.is-menu-open .menu-toggle__bar:nth-child(2) {
+		opacity: 0;
+	}
+	header.is-menu-open .menu-toggle__bar:nth-child(3) {
+		transform: translateY(-6px) rotate(-45deg);
+	}
+	@media (max-width: 960px) {
+		.menu-toggle {
+			display: inline-flex;
+		}
+		nav {
+			grid-template-columns: auto 1fr;
+		}
+		.internal-links {
+			position: fixed;
+			top: 0;
+			left: 0;
+			right: var(--scrollbar-width, 0px);
+			bottom: 0;
+			box-sizing: border-box;
+			z-index: 40;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 0.5em;
+			background: rgb(var(--surface));
+			padding: 2em;
+			opacity: 0;
+			pointer-events: none;
+			transition: opacity 220ms ease;
+		}
+		.internal-links a {
+			padding: 0.5em 0;
+			border-bottom: none;
+			font-size: 1.5em;
+			text-align: center;
+			color: var(--black);
+			text-decoration: none;
+		}
+		.internal-links.is-open {
+			opacity: 1;
+			pointer-events: auto;
+		}
+		body:has(header.is-menu-open) {
+			overflow: hidden;
+			padding-right: var(--scrollbar-width, 0px);
 		}
 	}
 </style>
