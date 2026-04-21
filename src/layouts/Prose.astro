@@ -1,0 +1,50 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import { DEFAULT_LOCALE, type Locale } from '~/consts';
+import { getLocaleFromUrl } from '~/i18n/ui';
+
+interface Props {
+	title: string;
+	description: string;
+	locale?: Locale;
+}
+
+const {
+	title,
+	description,
+	locale = getLocaleFromUrl(Astro.url) ?? DEFAULT_LOCALE,
+} = Astro.props;
+---
+
+<BaseLayout title={title} description={description} locale={locale} bodyClass="prose-page">
+	<article class="prose">
+		<slot />
+	</article>
+</BaseLayout>
+
+<style>
+	body.prose-page main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.prose-page .prose :global(.r) {
+		direction: rtl;
+		unicode-bidi: bidi-override;
+	}
+</style>
+
+<script>
+	function decode() {
+		document.querySelectorAll<HTMLElement>('[data-obf]').forEach((el) => {
+			el.textContent = atob(el.dataset.obf!);
+			el.removeAttribute('data-obf');
+		});
+		document.querySelectorAll<HTMLAnchorElement>('[data-obf-href]').forEach((el) => {
+			el.href = atob(el.dataset.obfHref!);
+			el.removeAttribute('data-obf-href');
+		});
+	}
+	decode();
+	document.addEventListener('astro:page-load', decode);
+</script>

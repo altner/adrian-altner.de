@@ -1,15 +1,52 @@
 ---
+import { DEFAULT_LOCALE, type Locale } from '~/consts';
+import { getLocaleFromUrl, localizePath, t } from '~/i18n/ui';
+
+interface Props {
+	locale?: Locale;
+}
+
+const locale: Locale = Astro.props.locale ?? getLocaleFromUrl(Astro.url) ?? DEFAULT_LOCALE;
+const contactSegment = locale === 'de' ? 'kontakt' : 'contact';
+const imprintSegment = locale === 'de' ? 'impressum' : 'imprint';
+const privacySegment = locale === 'de' ? 'datenschutz' : 'privacy-policy';
+
 const today = new Date();
 ---
 
 <footer>
-	&copy; {today.getFullYear()} Adrian Altner
+	<div class="footer__inner">
+		<span>&copy; {today.getFullYear()} Adrian Altner</span>
+		<nav class="footer__links" aria-label="Legal">
+			<a href={localizePath(`/${contactSegment}`, locale)}>{t(locale, 'footer.contact')}</a>
+			<a href={localizePath(`/${imprintSegment}`, locale)}>{t(locale, 'footer.imprint')}</a>
+			<a href={localizePath(`/${privacySegment}`, locale)}>{t(locale, 'footer.privacy')}</a>
+		</nav>
+	</div>
 </footer>
 <style>
 	footer {
-		padding: 2em 1em 6em 1em;
-		background: linear-gradient(var(--gray-gradient)) no-repeat;
+		padding: 2em 20px;
+		font-size: 0.75em;
+		line-height: 0;
+	}
+	.footer__inner {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 0.5em 1.25em;
+	}
+	.footer__links {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 1em;
+	}
+	.footer__links a {
 		color: rgb(var(--gray));
-		text-align: center;
+		text-decoration: none;
+	}
+	.footer__links a:hover {
+		color: var(--accent);
 	}
 </style>

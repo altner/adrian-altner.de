@@ -1,6 +1,6 @@
 ---
 import type { CollectionEntry } from 'astro:content';
-import { DEFAULT_LOCALE, type Locale, SITE } from '~/consts';
+import { type Locale, SITE } from '~/consts';
 import {
 	aboutSegment,
 	categoryIndexSegment,
@@ -131,6 +131,12 @@ const switchHref = await resolveSwitchHref();
 	h2 {
 		margin: 0;
 		font-size: 1em;
+		text-align: left;
+	}
+	nav > h2 a {
+		display: block;
+		padding: 1em 0;
+		text-align: left;
 	}
 
 	h2 a,
@@ -138,10 +144,19 @@ const switchHref = await resolveSwitchHref();
 		text-decoration: none;
 	}
 	nav {
-		display: flex;
+		display: grid;
+		grid-template-columns: auto 1fr auto;
 		align-items: center;
-		justify-content: space-between;
 		gap: 1em;
+	}
+	nav > h2 {
+		justify-self: start;
+	}
+	nav > .internal-links {
+		justify-self: center;
+	}
+	nav > .toolbar {
+		justify-self: end;
 	}
 	nav a {
 		padding: 1em 0.5em;

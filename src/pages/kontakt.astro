@@ -1,0 +1,138 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="Kontakt" description="Kontakt zu Adrian Altner." locale="de" bodyClass="contact-page">
+	<article class="prose">
+		<h1>Kontakt</h1>
+
+		<h3>Hinweise &amp; Feedback</h3>
+		<p>Anmerkungen und Korrekturen sind jederzeit willkommen. Ich lese alles, antworte aber nur selten — lass dich davon bitte nicht abschrecken.</p>
+
+		<div class="note">
+			<strong>Bitte beachten:</strong> Unaufgefordert zugesandte Pressemitteilungen, Werbung und SEO-Angebote werden ohne Antwort gelöscht.
+		</div>
+
+		<h2>So erreichst du mich</h2>
+
+		<div class="cards">
+			<div class="card">
+				<div class="card__icon" aria-hidden="true">
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<rect x="2" y="4" width="20" height="16" rx="2"></rect>
+						<path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+					</svg>
+				</div>
+				<div class="card__body">
+					<p class="card__label">E-Mail</p>
+					<span class="card__value r" data-obf="bW9je3RvZH1yZW50bGEtbmFpcmRhe3RhfXllaA=="></span>
+				</div>
+			</div>
+
+			<div class="card card--placeholder">
+				<div class="card__icon" aria-hidden="true">
+					<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.15 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.05 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21 17z"></path>
+					</svg>
+				</div>
+				<div class="card__body">
+					<p class="card__label">Signal</p>
+					<p class="card__value card__value--muted">Folgt demnächst.</p>
+				</div>
+			</div>
+		</div>
+	</article>
+</BaseLayout>
+
+<script>
+	function decode() {
+		document.querySelectorAll<HTMLElement>('[data-obf]').forEach((el) => {
+			el.textContent = atob(el.dataset.obf!);
+			el.removeAttribute('data-obf');
+		});
+	}
+	decode();
+	document.addEventListener('astro:page-load', decode);
+</script>
+
+<style>
+	body.contact-page main {
+		width: 720px;
+		max-width: calc(100% - 2em);
+		margin: 2em auto;
+	}
+	body.contact-page h2 {
+		font-size: 1rem;
+		font-weight: 600;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+		margin: 2rem 0 1rem;
+		padding-bottom: 0.4rem;
+		border-bottom: 2px solid rgb(var(--black));
+	}
+	body.contact-page h3 {
+		font-size: 1rem;
+		font-weight: 600;
+		margin: 0 0 0.5rem;
+	}
+	body.contact-page .note {
+		font-size: 0.9rem;
+		color: rgb(var(--gray-dark));
+		background: rgb(var(--gray-light));
+		padding: 0.9rem 1.25rem;
+		border-radius: 6px;
+		line-height: 1.6;
+		margin: 1.5rem 0;
+	}
+	body.contact-page .cards {
+		display: flex;
+		flex-direction: column;
+		gap: 0.75rem;
+	}
+	body.contact-page .card {
+		display: flex;
+		align-items: flex-start;
+		gap: 1rem;
+		padding: 1rem 1.25rem;
+		background: rgb(var(--surface));
+		border: 1px solid rgb(var(--gray-light));
+		border-radius: 8px;
+	}
+	body.contact-page .card--placeholder {
+		opacity: 0.55;
+	}
+	body.contact-page .card__icon {
+		flex-shrink: 0;
+		margin-top: 0.2rem;
+		color: rgb(var(--gray));
+	}
+	body.contact-page .card__body {
+		display: flex;
+		flex-direction: column;
+		gap: 0.1rem;
+		min-width: 0;
+	}
+	body.contact-page .card__label {
+		font-size: 0.8rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		color: rgb(var(--gray));
+		margin: 0;
+	}
+	body.contact-page .card__value {
+		font-size: clamp(0.8rem, 3.5vw, 1rem);
+		color: rgb(var(--gray-dark));
+		margin: 0;
+		white-space: nowrap;
+	}
+	body.contact-page .card__value--muted {
+		color: rgb(var(--gray));
+		font-style: italic;
+	}
+	body.contact-page .r {
+		direction: rtl;
+		unicode-bidi: bidi-override;
+	}
+</style>
